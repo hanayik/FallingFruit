@@ -379,6 +379,7 @@ pointerTopRightY = s.uipointer(RectTop);
 if IsInRect(x,y,s.textBounds(s.i,:)) | IsInRect(pointerTopLeftX,pointerTopLeftY,s.textBounds(s.i,:)) | IsInRect(pointerTopRightX,pointerTopRightY,s.textBounds(s.i,:)) %#ok
     if ~s.cantHitYet(s.i)
         s.isHit(s.i) = 1;
+        s.RT = GetSecs;
         if s.stimList.isTarget(s.wi(s.i))
             s.numHits = s.numHits+1;
         end
@@ -634,6 +635,7 @@ ncols = numel(cols); % get number of columns
 for i = 1:ncols
     s.stimList.(cols{i}) = s.stimList.(cols{i})(newxlocs); % give each column the same random permutation
 end
+save_to_base(1);
 end
 
 
