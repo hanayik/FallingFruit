@@ -14,9 +14,9 @@ s.runnum = runnum;
 s.sex = sex;
 rootdir = fileparts(mfilename('fullpath')); %set up directories
 datadir = fullfile(rootdir,'data');
-picdir = fullfile(rootdir,'images');
+picdir = fullfile(rootdir,'cropped-big');
 s.picdir = picdir;
-s = loadImgsFromDisk(picdir, s);
+s = loadImgsFromDisk(s);
 s.stimList = readtable(fullfile(rootdir,'stims.csv'));
 datestring = getDateAndTime; % get date string down to the minute
 s.datafile = fullfile(datadir,sprintf('%s_%s_%s_%s.csv',subj, runnum,mfilename, datestring)); % make data file name for saving
@@ -56,9 +56,6 @@ params = PsychSetupParams(0,1); % set some standard parameters for this session
 params.titleBarRect = [0 0 params.maxXpixels 80];
 HideCursor;
 params.pointerColor = [0 0 0];
-uipointerImg = imread(fullfile(picdir, 'basket.jpeg'));
-uipointer = [0 0 100 83];
-uipointerOffset = uipointer(end)/2;
 SetMouse(params.Xc, params.Yc, params.win);
 waitframes = 1;
 numCornersInRect = 4;
@@ -72,6 +69,7 @@ s.newPos(1:maxNumItems) = 1;
 s.numHits = 0;
 s.flipText(1:maxNumItems) = 0;
 ratesVec = setRatesOfFall(s.imin, s.imax, maxNumItems); 
+ratesVec
 s.ratesVec = ratesVec;
 [s.xGridLocs, s.yGridLocs] = createScreenGrid(params.maxXpixels, params.maxYpixels, maxNumItems+1);
 s.xGridLocs = s.xGridLocs(1,2:end);
@@ -80,6 +78,14 @@ s.words = s.stimList.word(1:s.maxNumItems)';
 s.wi = 1:maxNumItems;
 s = balanceXaxisLocations(s);
 s.xlocs = s.xGridLocs(s.stimList.xlocs(1:s.maxNumItems)');
+s.picSizeXDirection = s.xlocs(1)*0.3; % make pics take up 30% of the column they are in
+s.basketSize = s.picSizeXDirection*2;
+s = resizeImgsForThisScreen(s);
+uipointerImg = imread(fullfile(s.picdir, 'basket.jpg'));
+uipointerImgWidthToHeighRatio = size(uipointerImg,1)/size(uipointerImg,2);
+uipointerImg = imresize(uipointerImg,[s.basketSize, s.basketSize*uipointerImgWidthToHeighRatio]);
+uipointer = [0 0 size(uipointerImg,1) size(uipointerImg,2)];
+uipointerOffset = uipointer(end)/2;
 RestrictKeysForKbCheck(cellfun(@KbName, keys));
 s.textBounds = zeros(maxNumItems, numCornersInRect);
 ShowInstructions(params, s, instruct, {'space', 'escape'});
@@ -404,7 +410,8 @@ if s.isHit(s.i) == 1
         s = updateRateOfFall(s);
     end
 else
-    s.newPos(s.i) = round(s.yGridLocs(s.lastYpos(s.i))+s.ratesVec(s.i));
+    s.newPos(s.i) = round(s.yGridLocs(round(s.lastYpos(s.i)))+s.ratesVec(s.i));
+    save_to_base(1)
 end
 end
 
@@ -682,13 +689,36 @@ textBounds = [min(wordRects(RectLeft,:)), min(wordRects(RectTop,:)), max(wordRec
 end
 
 
-function s = loadImgsFromDisk(picdir, s)
-s.apple = imread(fullfile(picdir, 'apple.jpeg'));
-s.orange = imread(fullfile(picdir, 'orange.jpeg'));
-s.peach = imread(fullfile(picdir, 'peach.png'));
-s.basketball = imread(fullfile(picdir, 'basketball.png'));
-s.button = imread(fullfile(picdir, 'button.jpg'));
-s.wheel = imread(fullfile(picdir, 'wheel.jpeg'));
+function s = loadImgsFromDisk(s)
+s.apple = imread(fullfile(s.picdir, 'apple.jpg'));
+s.orange = imread(fullfile(s.picdir, 'orange.jpg'));
+s.peach = imread(fullfile(s.picdir, 'peach.png'));
+s.basketball = imread(fullfile(s.picdir, 'basketball.png'));
+s.button = imread(fullfile(s.picdir, 'button.jpg'));
+s.wheel = imread(fullfile(s.picdir, 'wheel.jpg'));
+end
+
+function s = resizeImgsForThisScreen(s)
+appleWtoHRatio = size(s.apple,1)/size(s.apple,2);
+orangeWtoHRatio = size(s.orange,1)/size(s.orange,2);
+peachWtoHRatio = size(s.peach,1)/size(s.peach,2);
+basketballWtoHRatio = size(s.basketball,1)/size(s.basketball,2);
+buttonWtoHRatio = size(s.button,1)/size(s.button,2);
+wheelWtoHRatio = size(s.wheel,1)/size(s.wheel,2);
+
+newAppleSize = [s.picSizeXDirection s.picSizeXDirection*appleWtoHRatio];
+newOrangeSize = [s.picSizeXDirection s.picSizeXDirection*orangeWtoHRatio];
+newPeachSize = [s.picSizeXDirection s.picSizeXDirection*peachWtoHRatio];
+newBasketballSize = [s.picSizeXDirection s.picSizeXDirection*basketballWtoHRatio];
+newButtonSize = [s.picSizeXDirection s.picSizeXDirection*buttonWtoHRatio];
+newWheelSize = [s.picSizeXDirection s.picSizeXDirection*wheelWtoHRatio];
+
+s.apple = imresize(s.apple, newAppleSize);
+s.orange = imresize(s.orange, newOrangeSize);
+s.peach = imresize(s.peach, newPeachSize);
+s.basketball = imresize(s.basketball, newBasketballSize);
+s.button = imresize(s.button, newButtonSize);
+s.wheel = imresize(s.wheel, newWheelSize);
 end
 
 

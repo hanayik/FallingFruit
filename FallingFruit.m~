@@ -16,7 +16,7 @@ rootdir = fileparts(mfilename('fullpath')); %set up directories
 datadir = fullfile(rootdir,'data');
 picdir = fullfile(rootdir,'images');
 s.picdir = picdir;
-s = loadImgsFromDisk(picdir, s);
+s = loadImgsFromDisk(s);
 s.stimList = readtable(fullfile(rootdir,'stims.csv'));
 datestring = getDateAndTime; % get date string down to the minute
 s.datafile = fullfile(datadir,sprintf('%s_%s_%s_%s.csv',subj, runnum,mfilename, datestring)); % make data file name for saving
@@ -56,9 +56,6 @@ params = PsychSetupParams(0,1); % set some standard parameters for this session
 params.titleBarRect = [0 0 params.maxXpixels 80];
 HideCursor;
 params.pointerColor = [0 0 0];
-uipointerImg = imread(fullfile(picdir, 'basket.jpeg'));
-uipointer = [0 0 100 83];
-uipointerOffset = uipointer(end)/2;
 SetMouse(params.Xc, params.Yc, params.win);
 waitframes = 1;
 numCornersInRect = 4;
@@ -80,6 +77,14 @@ s.words = s.stimList.word(1:s.maxNumItems)';
 s.wi = 1:maxNumItems;
 s = balanceXaxisLocations(s);
 s.xlocs = s.xGridLocs(s.stimList.xlocs(1:s.maxNumItems)');
+s.picSizeXDirection = s.xlocs(1)*0.3; % make pics take up 30% of the column they are in
+s.basketSize = s.picSizeXDirection*2;
+s = resizeImgsForThisScreen(s);
+uipointerImg = imread(fullfile(s.picdir, 'basket.jpeg'));
+uipointerImgWidthToHeighRatio = size(uipointerImg,1)/size(uipointerImg,2);
+uipointerImg = imresize(uipointerImg,[s.basketSize, s.basketSize*uipointerImgWidthToHeighRatio]);
+uipointer = [0 0 size(uipointerImg,1) size(uipointerImg,2)];
+uipointerOffset = uipointer(end)/2;
 RestrictKeysForKbCheck(cellfun(@KbName, keys));
 s.textBounds = zeros(maxNumItems, numCornersInRect);
 ShowInstructions(params, s, instruct, {'space', 'escape'});
@@ -379,7 +384,6 @@ pointerTopRightY = s.uipointer(RectTop);
 if IsInRect(x,y,s.textBounds(s.i,:)) | IsInRect(pointerTopLeftX,pointerTopLeftY,s.textBounds(s.i,:)) | IsInRect(pointerTopRightX,pointerTopRightY,s.textBounds(s.i,:)) %#ok
     if ~s.cantHitYet(s.i)
         s.isHit(s.i) = 1;
-        s.RT = GetSecs;
         if s.stimList.isTarget(s.wi(s.i))
             s.numHits = s.numHits+1;
         end
@@ -405,6 +409,11 @@ if s.isHit(s.i) == 1
         s = updateRateOfFall(s);
     end
 else
+    s.i
+    disp('s.yGridLocs')
+    s.yGridLocs(s.lastYpos(s.i))
+    disp('s.ratesVec')
+    s.ratesVec(s.i)
     s.newPos(s.i) = round(s.yGridLocs(s.lastYpos(s.i))+s.ratesVec(s.i));
 end
 end
@@ -635,7 +644,6 @@ ncols = numel(cols); % get number of columns
 for i = 1:ncols
     s.stimList.(cols{i}) = s.stimList.(cols{i})(newxlocs); % give each column the same random permutation
 end
-save_to_base(1);
 end
 
 
@@ -684,13 +692,36 @@ textBounds = [min(wordRects(RectLeft,:)), min(wordRects(RectTop,:)), max(wordRec
 end
 
 
-function s = loadImgsFromDisk(picdir, s)
-s.apple = imread(fullfile(picdir, 'apple.jpeg'));
-s.orange = imread(fullfile(picdir, 'orange.jpeg'));
-s.peach = imread(fullfile(picdir, 'peach.png'));
-s.basketball = imread(fullfile(picdir, 'basketball.png'));
-s.button = imread(fullfile(picdir, 'button.jpg'));
-s.wheel = imread(fullfile(picdir, 'wheel.jpeg'));
+function s = loadImgsFromDisk(s)
+s.apple = imread(fullfile(s.picdir, 'apple.jpeg'));
+s.orange = imread(fullfile(s.picdir, 'orange.jpeg'));
+s.peach = imread(fullfile(s.picdir, 'peach.png'));
+s.basketball = imread(fullfile(s.picdir, 'basketball.png'));
+s.button = imread(fullfile(s.picdir, 'button.jpg'));
+s.wheel = imread(fullfile(s.picdir, 'wheel.jpeg'));
+end
+
+function s = resizeImgsForThisScreen(s)
+appleWtoHRatio = size(s.apple,1)/size(s.apple,2);
+orangeWtoHRatio = size(s.orange,1)/size(s.orange,2);
+peachWtoHRatio = size(s.peach,1)/size(s.peach,2);
+basketballWtoHRatio = size(s.basketball,1)/size(s.basketball,2);
+buttonWtoHRatio = size(s.button,1)/size(s.button,2);
+wheelWtoHRatio = size(s.wheel,1)/size(s.wheel,2);
+
+newAppleSize = [s.picSizeXDirection s.picSizeXDirection*appleWtoHRatio];
+newOrangeSize = [s.picSizeXDirection s.picSizeXDirection*orangeWtoHRatio];
+newPeachSize = [s.picSizeXDirection s.picSizeXDirection*peachWtoHRatio];
+newBasketballSize = [s.picSizeXDirection s.picSizeXDirection*basketballWtoHRatio];
+newButtonSize = [s.picSizeXDirection s.picSizeXDirection*buttonWtoHRatio];
+newWheelSize = [s.picSizeXDirection s.picSizeXDirection*wheelWtoHRatio];
+
+s.apple = imresize(s.apple, newAppleSize);
+s.orange = imresize(s.orange, newOrangeSize);
+s.peach = imresize(s.peach, newPeachSize);
+s.basketball = imresize(s.basketball, newBasketballSize);
+s.button = imresize(s.button, newButtonSize);
+s.wheel = imresize(s.wheel, newWheelSize);
 end
 
 
