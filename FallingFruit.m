@@ -26,7 +26,7 @@ if ~exist(datadir,'dir') % if data folder doesn't exist, make it
 end
 sca; % clear the screen, and other PTB backend things
 maxNumItems = 8;
-s.maxTime = 60; % seconds
+s.maxTime = 120; % seconds
 s.imin = 5; % minimum rate of fall
 s.imax = 8; % maximum rate of fall 
 s.estTableSize = round(s.maxTime+((s.maxTime*0.25)*mean([s.imin s.imax]))); % preallocate for speed! Zoom zoom....
@@ -109,7 +109,6 @@ onlyTargs = find(s.T.isTarget(filledCells) > 0); % get the target data using all
 % alltargs = find(onlyTargs > 0);
 % acc = length(targsHit)/length(onlyHits); % get average for the newly created vector with hit and target data
 writetable(s.T,s.datafile);
-% save_to_base(1);
 CleanUp;
 WaitSecs(1);
 syncFilesToCloud({s.datafile}, subj, runnum);
@@ -411,7 +410,6 @@ if s.isHit(s.i) == 1
     end
 else
     s.newPos(s.i) = round(s.yGridLocs(round(s.lastYpos(s.i)))+s.ratesVec(s.i));
-    save_to_base(1)
 end
 end
 
