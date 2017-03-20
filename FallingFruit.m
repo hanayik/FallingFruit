@@ -27,8 +27,8 @@ end
 sca; % clear the screen, and other PTB backend things
 maxNumItems = 8;
 s.maxTime = 120; % seconds
-s.imin = 5; % minimum rate of fall
-s.imax = 8; % maximum rate of fall 
+s.imin = 7; % minimum rate of fall
+s.imax = 10; % maximum rate of fall 
 s.estTableSize = round(s.maxTime+((s.maxTime*0.25)*mean([s.imin s.imax]))); % preallocate for speed! Zoom zoom....
 
 
@@ -103,17 +103,17 @@ while ~KbCheck & s.timeRemaining > 1 %#ok
     s.vbl = vbl;
 end
 filledCells = ~cellfun(@isempty,s.T.subj); % only use table rows that have subj values (gets rid of preallocated shit at the end)
-onlyHits = find(s.T.hit(filledCells) > 0); % get the hit data using all the filled cells
-onlyTargs = find(s.T.isTarget(filledCells) > 0); % get the target data using all the filled cells
-% targsHit = find(onlyHits > 0 & onlyTargs > 0);
-% alltargs = find(onlyTargs > 0);
-% acc = length(targsHit)/length(onlyHits); % get average for the newly created vector with hit and target data
+onlyHits = length(find(s.T.hit(filledCells) == 1));
+targsHit = length(find(s.T.hit > 0 & s.T.isTarget > 0));
+acc = targsHit/onlyHits;
+save_to_base(1);
 writetable(s.T,s.datafile);
 CleanUp;
 WaitSecs(1);
 syncFilesToCloud({s.datafile}, subj, runnum);
 ShowCursor;
-% fprintf('\n\n***************\n\nAccuracy: %2.2f%%\nPoints: %d\n***************\n\n',acc*100,s.numHits);
+fprintf('\n\n***************\n\nAccuracy: %2.2f%%\n***************\n\n',acc*100);
+
 % uiwait(msgbox(sprintf('Accuracy: %2.2f%%\nPoints: %d',acc*100,s.numHits)));
 end
 
@@ -347,8 +347,8 @@ end
 function s = showSessionStatsInTitleBar(params,s)
 s.timeRemaining = s.maxTime-(s.vbl-s.startTime);
 Screen('FillRect', params.win, params.headerColor, params.titleBarRect);
-x = Screen('DrawText', params.win, sprintf('Time remaining: %3.0f ', s.timeRemaining),5,30, params.TextColor);
-Screen('DrawText', params.win, sprintf('Points: %03d ',s.numHits),x+10,30, params.TextColor);
+Screen('DrawText', params.win, sprintf('Time remaining: %3.0f ', s.timeRemaining),5,30, params.TextColor);
+%Screen('DrawText', params.win, sprintf('Points: %03d ',s.numHits),x+10,30, params.TextColor);
 end
 
 
